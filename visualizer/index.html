@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State Machine Path Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #373aff;
+            --primary-hover: #0039bd;
+            --secondary-color: #f1f5f9;
+            --accent-color: #0ea5e9;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --border-light: #f1f5f9;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-md: 0.75rem;
+            --radius-lg: 1rem;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: linear-gradient(135deg, #001884 0%, #1d77ff 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1.5rem 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.75rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+        
+        .content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        .sidebar {
+            width: 320px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow-y: auto;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .network-container {
+            flex: 1;
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+        
+        #network {
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+        }
+        
+        .panel {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+        
+        .panel:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+        
+        .panel-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-light);
+            padding-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .panel-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border-radius: 2px;
+        }
+        
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            width: 100%;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: var(--accent-color);
+        }
+        
+        .btn-secondary:hover {
+            background: #0284c7;
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .form-control {
+            margin-bottom: 1rem;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .form-control:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .legend {
+            margin-top: 0.5rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+        
+        .legend-item:hover {
+            background: var(--border-light);
+            transform: translateX(4px);
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            margin-right: 0.75rem;
+            border-radius: 4px;
+            box-shadow: var(--shadow-sm);
+            flex-shrink: 0;
+        }
+        
+        .normal {
+            background: #ffffff;
+            border: 2px solid #3b82f6;
+        }
+
+        .endpoint {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+        }
+
+        .path-node {
+            background: #f3e8ff;
+            border: 2px solid #a855f7;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-lg);
+            display: none;
+            z-index: 1000;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(100px);
+            transition: all 0.3s ease;
+            max-width: 400px;
+        }
+        
+        .notification.show {
+            display: block;
+            transform: translateY(0);
+        }
+        
+        .notification.success {
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .notification.error {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .notification.default {
+            background: rgba(15, 23, 42, 0.9);
+            color: white;
+            border: 1px solid rgba(15, 23, 42, 0.3);
+        }
+
+        .paths-list {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 0.75rem;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) transparent;
+        }
+        
+        .paths-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .paths-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .paths-list::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .path-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 0.825rem;
+            transition: all 0.2s ease;
+            background: var(--bg-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .path-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--primary-color);
+            transform: scaleY(0);
+            transition: transform 0.2s ease;
+        }
+
+        .path-item:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary-color);
+            transform: translateX(4px);
+        }
+        
+        .path-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .path-item.selected {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(14, 165, 233, 0.1));
+            border-color: var(--primary-color);
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        
+        .path-item.selected::before {
+            transform: scaleY(1);
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-input-label {
+            display: block;
+            padding: 0.75rem 1rem;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--bg-secondary);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        
+        .file-input-label:hover {
+            border-color: var(--primary-color);
+            background: rgba(99, 102, 241, 0.05);
+            color: var(--primary-color);
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        
+        .controls-grid .btn {
+            font-size: 0.8rem;
+            padding: 0.6rem 1rem;
+        }
+        
+        .layout-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        
+        .layout-controls .btn {
+            font-size: 0.75rem;
+            padding: 0.5rem 0.75rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .content {
+                flex-direction: column;
+                padding: 0.5rem;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-height: 300px;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>    
+    <div class="content">
+        <div class="sidebar">
+            <div class="panel fade-in">
+                <div class="panel-title">Import Machine</div>
+                <div class="file-input-wrapper">
+                    <input type="file" id="file-input" accept=".json">
+                    <label for="file-input" class="file-input-label">
+                        📁 Choose JSON file or drag & drop
+                    </label>
+                </div>
+                <button id="load-button" class="btn">Load Machine</button>
+            </div>
+            
+            <div class="panel fade-in">
+                <div class="panel-title">Layout Options</div>
+                <div class="form-group">
+                    <label class="label" for="layout-select">Layout Style:</label>
+                    <select id="layout-select" class="form-control">
+                        <option value="grid">Grid Layout</option>
+                        <option value="hierarchical">Hierarchical</option>
+                        <option value="force">Force-Directed</option>
+                        <option value="circular">Circular</option>
+                    </select>
+                </div>
+                <div class="layout-controls">
+                    <button id="apply-layout-button" class="btn btn-secondary">Apply Layout</button>
+                    <button id="fit-view-button" class="btn">Fit View</button>
+                </div>
+            </div>
+            
+            <div class="panel fade-in">
+                <div class="panel-title">Path Configuration</div>
+                <div class="form-group">
+                    <label class="label" for="end-node-select">End Node:</label>
+                    <select id="end-node-select" class="form-control">
+                        <option value="">Select an end node</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="label" for="max-depth-input">Max Depth:</label>
+                    <input type="number" id="max-depth-input" class="form-control" min="1" value="3">
+                </div>
+                <button id="find-paths-button" class="btn btn-danger">🔍 Find Paths</button>
+                <div id="paths-container" style="display: none;">
+                    <div class="panel-title" style="margin-top: 1rem;">Found Paths</div>
+                    <div id="paths-list" class="paths-list"></div>
+                </div>
+            </div>
+            
+            <div class="panel fade-in">
+                <div class="panel-title">Controls</div>
+                <div class="controls-grid">
+                    <button id="reset-button" class="btn">🎯 Reset View</button>
+                    <button id="clear-highlight-button" class="btn">✨ Clear Highlights</button>
+                </div>
+                <button id="save-button" class="btn btn-success" style="margin-top: 0.75rem;">💾 Save PNG</button>
+            </div>
+            
+            <div class="panel fade-in">
+                <div class="panel-title">Legend</div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color normal"></div>
+                        <span>Normal State</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color endpoint"></div>
+                        <span>End Node</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color path-node"></div>
+                        <span>Path Node</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="network-container">
+            <div id="network"></div>
+        </div>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+    
+    <script>
+        // Wait until the page is fully loaded
+        window.onload = function() {
+            // DOM elements
+            const fileInput = document.getElementById('file-input');
+            const loadButton = document.getElementById('load-button');
+            const resetButton = document.getElementById('reset-button');
+            const saveButton = document.getElementById('save-button');
+            const endNodeSelect = document.getElementById('end-node-select');
+            const maxDepthInput = document.getElementById('max-depth-input');
+            const findPathsButton = document.getElementById('find-paths-button');
+            const pathsContainer = document.getElementById('paths-container');
+            const pathsList = document.getElementById('paths-list');
+            const clearHighlightButton = document.getElementById('clear-highlight-button');
+            const notification = document.getElementById('notification');
+            const layoutSelect = document.getElementById('layout-select');
+            const applyLayoutButton = document.getElementById('apply-layout-button');
+            const fitViewButton = document.getElementById('fit-view-button');
+            
+            // Network variables
+            let network = null;
+            let nodes = new vis.DataSet();
+            let edges = new vis.DataSet();
+            let currentMachine = null;
+            let originalNodesData = [];
+            let originalEdgesData = [];
+            let foundPaths = [];
+            
+            // Initialize an empty network
+            function initializeNetwork() {
+                const container = document.getElementById('network');
+                const data = {
+                    nodes: nodes,
+                    edges: edges
+                };
+                
+                const options = {
+                    nodes: {
+                        shape: 'box',
+                        margin: 10,
+                        font: { 
+                            size: 14,
+                            face: 'Inter, sans-serif',
+                            color: '#0f172a',
+                            bold: '500'
+                        },
+                        color: {
+                            background: '#ffffff',
+                            border: '#3b82f6',
+                            highlight: {
+                                background: '#eff6ff',
+                                border: '#2563eb'
+                            },
+                            hover: {
+                                background: '#f0f9ff',
+                                border: '#1d4ed8'
+                            }
+                        },
+                        borderWidth: 2,
+                        shadow: {
+                            enabled: true,
+                            color: 'rgba(0,0,0,0.1)',
+                            size: 8,
+                            x: 2,
+                            y: 2
+                        },
+                        widthConstraint: { maximum: 150 },
+                        heightConstraint: { minimum: 10 },
+                        chosen: true
+                    },
+                    edges: {
+                        arrows: { 
+                            to: { 
+                                enabled: true, 
+                                scaleFactor: 1.2,
+                                type: 'arrow'
+                            } 
+                        },
+                        smooth: {
+                            enabled: true,
+                            type: 'straightCross',
+                      
+                        },
+                          selfReferenceSize: 50 ,
+                        font: { 
+                            size: 12,
+                            face: 'Inter, sans-serif',
+                            align: 'middle',
+                            background: 'rgba(255,255,255,0.95)',
+                            strokeWidth: 3,
+                            strokeColor: '#ffffff',
+                            color: '#374151',
+                            bold: '500',
+                             align: 'horizontal' 
+                        },
+                        color: {
+                            color: '#6b7280',
+                            highlight: '#3b82f6',
+                            hover: '#1d4ed8'
+                        },
+                        width: 2,
+                        labelHighlightBold: true,
+                        chosen: true
+                    },
+                    physics: {
+                        enabled: false
+                    },
+                    interaction: {
+                        dragNodes: true,
+                        dragView: true,
+                        zoomView: true,
+                        hover: true,
+                        selectConnectedEdges: false
+                    },
+                    layout: {
+                        improvedLayout: true
+                    }
+                };
+                
+                network = new vis.Network(container, data, options);
+            }
+            
+            // Show notification message
+            function showNotification(message, type = 'default') {
+                notification.textContent = message;
+                notification.className = 'notification ' + type;
+                notification.classList.add('show');
+                
+                setTimeout(function() {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Format trigger text for better readability
+            function formatTrigger(trigger) {
+                // Replace underscores with spaces and capitalize words
+                return trigger
+                    .replace(/_/g, ' ')
+                    .replace(/\b\w/g, l => l.toUpperCase())
+                    .replace(/([a-z])([A-Z])/g, '$1 $2'); // Add space before capital letters
+            }
+            
+            // Apply different layout styles
+            function applyLayout(layoutType) {
+                if (!network || nodes.length === 0) {
+                    showNotification('No network to layout', 'error');
+                    return;
+                }
+                
+                const nodeIds = nodes.getIds();
+                const nodeCount = nodeIds.length;
+                
+                // Disable physics during layout
+                network.setOptions({ physics: { enabled: false } });
+                
+                switch (layoutType) {
+                    case 'grid':
+                        applyGridLayout();
+                        break;
+                    case 'hierarchical':
+                        applyHierarchicalLayout();
+                        break;
+                    case 'force':
+                        applyForceLayout();
+                        break;
+                    case 'circular':
+                        applyCircularLayout();
+                        break;
+                    default:
+                        applyGridLayout();
+                }
+                
+                setTimeout(() => {
+                    fitView();
+                }, 100);
+            }
+            
+            // Grid layout
+            function applyGridLayout() {
+                const nodeIds = nodes.getIds();
+                const nodeCount = nodeIds.length;
+                
+                let cols;
+                if (nodeCount <= 4) cols = 2;
+                else if (nodeCount <= 9) cols = 3;
+                else if (nodeCount <= 16) cols = 4;
+                else if (nodeCount <= 25) cols = 5;
+                else cols = Math.ceil(Math.sqrt(nodeCount));
+                
+                const spacing = 300;
+                
+                nodeIds.forEach(function(id, index) {
+                    const col = index % cols;
+                    const row = Math.floor(index / cols);
+                    
+                    nodes.update({
+                        id: id,
+                        x: col * spacing,
+                        y: row * spacing,
+                        fixed: false
+                    });
+                });
+            }
+            
+            // Hierarchical layout
+            function applyHierarchicalLayout() {
+                network.setOptions({
+                    layout: {
+                        hierarchical: {
+                            enabled: true,
+                            direction: 'UD',
+                            sortMethod: 'directed',
+                            nodeSpacing: 200,
+                            levelSeparation: 180,
+                            treeSpacing: 200,
+                            blockShifting: true,
+                            edgeMinimization: true,
+                            parentCentralization: true
+                        }
+                    },
+                    physics: {
+                        enabled: false
+                    }
+                });
+            }
+            
+            // Force-directed layout
+            function applyForceLayout() {
+                // Reset positions and enable physics
+                const nodeIds = nodes.getIds();
+                nodeIds.forEach(id => {
+                    nodes.update({
+                        id: id,
+                        fixed: false
+                    });
+                });
+                
+                network.setOptions({
+                    layout: {
+                        hierarchical: false,
+                        improvedLayout: true
+                    },
+                    physics: {
+                        enabled: true,
+                        barnesHut: {
+                            gravitationalConstant: -2000,
+                            centralGravity: 0.3,
+                            springLength: 200,
+                            springConstant: 0.05,
+                            damping: 0.09
+                        },
+                        maxVelocity: 50,
+                        minVelocity: 0.1,
+                        stabilization: {
+                            enabled: true,
+                            iterations: 1000,
+                            updateInterval: 100
+                        }
+                    }
+                });
+                
+                // Disable physics after stabilization
+                network.on('stabilizationIterationsDone', function() {
+                    network.setOptions({ physics: { enabled: false } });
+                });
+            }
+            
+            // Circular layout
+            function applyCircularLayout() {
+                const nodeIds = nodes.getIds();
+                const nodeCount = nodeIds.length;
+                const radius = Math.max(200, nodeCount * 30);
+                const angleStep = (2 * Math.PI) / nodeCount;
+                
+                nodeIds.forEach(function(id, index) {
+                    const angle = index * angleStep;
+                    const x = radius * Math.cos(angle);
+                    const y = radius * Math.sin(angle);
+                    
+                    nodes.update({
+                        id: id,
+                        x: x,
+                        y: y,
+                        fixed: false
+                    });
+                });
+            }
+            
+            // Reset view to fit all nodes
+            function fitView() {
+                if (network && nodes.length > 0) {
+                    network.fit({
+                        animation: {
+                            duration: 1000,
+                            easingFunction: 'easeInOutQuad'
+                        }
+                    });
+                }
+            }
+            
+            // Save network as PNG
+            function saveAsPng() {
+                if (!network || nodes.length === 0) {
+                    showNotification('No network to save', 'error');
+                    return;
+                }
+                
+                try {
+                    const canvas = network.canvas.frame.canvas;
+                    const dataURL = canvas.toDataURL('image/png');
+                    
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = dataURL;
+                    downloadLink.download = currentMachine ? 
+                        `${currentMachine.name}.png` : 
+                        'state-machine.png';
+                    
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    
+                    showNotification('Image saved successfully', 'success');
+                } catch (error) {
+                    showNotification('Error saving image: ' + error.message, 'error');
+                    console.error('Error saving image:', error);
+                }
+            }
+            
+            // Create visualization for a state machine
+            function visualizeMachine(machine) {
+                // Clear existing data
+                nodes.clear();
+                edges.clear();
+                endNodeSelect.innerHTML = '<option value="">Select an end node</option>';
+                pathsContainer.style.display = 'none';
+                
+                if (!machine.states || !machine.transitions) {
+                    showNotification('Invalid machine format', 'error');
+                    return;
+                }
+                
+                // Create nodes with clean styling
+                machine.states.forEach(function(state) {
+                    nodes.add({
+                        id: state,
+                        label: state,
+                        color: {
+                            background: '#ffffff',
+                            border: '#3b82f6'
+                        },
+                        borderWidth: 2,
+                        font: {
+                            size: 14,
+                            face: 'Inter, sans-serif',
+                            color: '#0f172a',
+                            bold: '500'
+                        }
+                    });
+
+                    // Add state to end node select
+                    const option = document.createElement('option');
+                    option.value = state;
+                    option.textContent = state;
+                    endNodeSelect.appendChild(option);
+                });
+                
+                // Process transitions to create edges with better trigger formatting
+                const processedEdges = new Map();
+                
+                machine.transitions.forEach(function(transition) {
+                    if (transition.source === '*') {
+                        // Handle wildcard transitions
+                        machine.states.forEach(function(state) {
+                            if (state !== transition.dest) {
+                                const edgeKey = `${state}-${transition.dest}`;
+                                
+                                if (!processedEdges.has(edgeKey)) {
+                                    processedEdges.set(edgeKey, {
+                                        id: edgeKey,
+                                        from: state,
+                                        to: transition.dest,
+                                        label: formatTrigger(transition.trigger),
+                                        rawTrigger: transition.trigger
+                                    });
+                                } else {
+                                    const existingEdge = processedEdges.get(edgeKey);
+                                    if (!existingEdge.rawTrigger.includes(transition.trigger)) {
+                                        existingEdge.label += `\n${formatTrigger(transition.trigger)}`;
+                                        existingEdge.rawTrigger += `, ${transition.trigger}`;
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        // Regular transition
+                        const edgeKey = `${transition.source}-${transition.dest}`;
+                        
+                        if (!processedEdges.has(edgeKey)) {
+                            processedEdges.set(edgeKey, {
+                                id: edgeKey,
+                                from: transition.source,
+                                to: transition.dest,
+                                label: formatTrigger(transition.trigger),
+                                rawTrigger: transition.trigger
+                            });
+                        } else {
+                            // Multiple triggers between same states
+                            const existingEdge = processedEdges.get(edgeKey);
+                            if (!existingEdge.rawTrigger.includes(transition.trigger)) {
+                                existingEdge.label += `\n${formatTrigger(transition.trigger)}`;
+                                existingEdge.rawTrigger += `, ${transition.trigger}`;
+                            }
+                        }
+                    }
+                });
+                
+                // Add all processed edges to the network
+                edges.add(Array.from(processedEdges.values()));
+                
+                // Store original data for later use
+                originalNodesData = nodes.get();
+                originalEdgesData = edges.get();
+                
+                // Apply initial layout
+                setTimeout(function() {
+                    applyLayout(layoutSelect.value);
+                    showNotification(`Machine "${machine.name}" loaded successfully`, 'success');
+                }, 100);
+            }
+            
+            // Find all paths from any node to the selected end node with maximum depth
+            function findAllPaths(endNode, maxDepth) {
+                if (!currentMachine || !endNode) {
+                    showNotification('Please select a machine and an end node', 'error');
+                    return [];
+                }
+                
+                // Build a graph representation for easy traversal
+                const graph = {};
+                
+                // Initialize empty adjacency lists for all states
+                currentMachine.states.forEach(state => {
+                    graph[state] = [];
+                });
+                
+                // Populate graph with transitions
+                currentMachine.transitions.forEach(transition => {
+                    if (transition.source === '*') {
+                        // Handle wildcard transitions
+                        currentMachine.states.forEach(state => {
+                            if (state !== transition.dest) {
+                                graph[state].push({
+                                    dest: transition.dest,
+                                    trigger: transition.trigger
+                                });
+                            }
+                        });
+                    } else {
+                        graph[transition.source].push({
+                            dest: transition.dest,
+                            trigger: transition.trigger
+                        });
+                    }
+                });
+                
+                const allPaths = [];
+                
+                // DFS to find all paths to the end node
+                function dfs(currentNode, path, depth) {
+                    // Add current node to the path
+                    path.push(currentNode);
+                    
+                    // If reached the end node, add the path to the result
+                    if (currentNode === endNode) {
+                        allPaths.push([...path]);
+                        path.pop();
+                        return;
+                    }
+                    
+                    // If reached maximum depth, stop exploring this path
+                    if (depth >= maxDepth) {
+                        path.pop();
+                        return;
+                    }
+                    
+                    // Explore all neighbors
+                    for (const neighbor of graph[currentNode]) {
+                        // Skip if the neighbor would create a cycle
+                        if (!path.includes(neighbor.dest)) {
+                            dfs(neighbor.dest, path, depth + 1);
+                        }
+                    }
+                    
+                    // Backtrack
+                    path.pop();
+                }
+                
+                // Start DFS from each node
+                currentMachine.states.forEach(state => {
+                    // Skip if starting from the end node itself (would be a 1-node path)
+                    if (state !== endNode) {
+                        dfs(state, [], 0);
+                    }
+                });
+                
+                // Add single-node path if the end node is a state
+                if (currentMachine.states.includes(endNode)) {
+                    allPaths.push([endNode]);
+                }
+                
+                return allPaths;
+            }
+            
+            // Highlight a specific path
+            function highlightPath(path) {
+                // Reset all nodes and edges to original state
+                clearHighlights();
+                
+                // Highlight the end node
+                const endNode = path[path.length - 1];
+                nodes.update({
+                    id: endNode,
+                    color: {
+                        background: '#fef3c7',
+                        border: '#f59e0b'
+                    },
+                    borderWidth: 3
+                });
+                
+                // Highlight path nodes
+                for (let i = 0; i < path.length - 1; i++) {
+                    const node = path[i];
+                    
+                    // Highlight the node
+                    nodes.update({
+                        id: node,
+                        color: {
+                            background: '#f3e8ff',
+                            border: '#a855f7'
+                        },
+                        borderWidth: 3
+                    });
+                    
+                    // Highlight the edge between this node and next node
+                    const edgeId = `${node}-${path[i + 1]}`;
+                    if (edges.get(edgeId)) {
+                        edges.update({
+                            id: edgeId,
+                            color: {
+                                color: '#a855f7',
+                                highlight: '#a855f7'
+                            },
+                            width: 4
+                        });
+                    }
+                }
+            }
+            
+            // Clear all highlights
+            function clearHighlights() {
+                // Reset nodes to original state
+                originalNodesData.forEach(node => {
+                    nodes.update({
+                        id: node.id,
+                        color: {
+                            background: '#ffffff',
+                            border: '#3b82f6'
+                        },
+                        borderWidth: 2
+                    });
+                });
+                
+                // Reset edges to original state
+                originalEdgesData.forEach(edge => {
+                    edges.update({
+                        id: edge.id,
+                        color: {
+                            color: '#6b7280',
+                            highlight: '#3b82f6'
+                        },
+                        width: 2
+                    });
+                });
+            }
+            
+            // Display found paths in the sidebar
+            function displayPaths(paths) {
+                pathsList.innerHTML = '';
+                
+                if (paths.length === 0) {
+                    const noPathsItem = document.createElement('div');
+                    noPathsItem.className = 'path-item';
+                    noPathsItem.textContent = 'No paths found';
+                    noPathsItem.style.textAlign = 'center';
+                    noPathsItem.style.color = 'var(--text-secondary)';
+                    pathsList.appendChild(noPathsItem);
+                    return;
+                }
+                
+                // Sort paths by length (shortest first)
+                paths.sort((a, b) => a.length - b.length);
+                
+                paths.forEach((path, index) => {
+                    const pathItem = document.createElement('div');
+                    pathItem.className = 'path-item';
+                    pathItem.innerHTML = `
+                        <div style="font-weight: 600; margin-bottom: 0.25rem; color: var(--primary-color);">
+                            Path ${index + 1} (${path.length} steps)
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            ${path.join(' → ')}
+                        </div>
+                    `;
+                    pathItem.dataset.pathIndex = index;
+                    
+                    pathItem.addEventListener('click', function() {
+                        // Clear previous selection
+                        document.querySelectorAll('.path-item.selected').forEach(item => {
+                            item.classList.remove('selected');
+                        });
+                        
+                        // Mark this path as selected
+                        this.classList.add('selected');
+                        
+                        // Highlight the path
+                        highlightPath(paths[this.dataset.pathIndex]);
+                    });
+                    
+                    pathsList.appendChild(pathItem);
+                });
+            }
+            
+            // Load state machine from JSON file
+            function loadMachineFromJson(jsonData) {
+                try {
+                    // Get the first property name (machine type)
+                    const machineType = Object.keys(jsonData)[0];
+                    
+                    if (!jsonData[machineType] || !Array.isArray(jsonData[machineType]) || jsonData[machineType].length === 0) {
+                        showNotification('Invalid machine format', 'error');
+                        return;
+                    }
+                    
+                    // Get the first machine definition
+                    currentMachine = jsonData[machineType][0];
+                    
+                    // Create visualization
+                    visualizeMachine(currentMachine);
+                    
+                } catch (error) {
+                    showNotification('Error processing JSON: ' + error.message, 'error');
+                    console.error('Error processing JSON:', error);
+                }
+            }
+            
+            // Initialize network
+            initializeNetwork();
+            
+            // Add drag and drop functionality
+            const fileInputLabel = document.querySelector('.file-input-label');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                fileInputLabel.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileInputLabel.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileInputLabel.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight(e) {
+                fileInputLabel.style.borderColor = 'var(--primary-color)';
+                fileInputLabel.style.background = 'rgba(99, 102, 241, 0.1)';
+                fileInputLabel.style.color = 'var(--primary-color)';
+            }
+            
+            function unhighlight(e) {
+                fileInputLabel.style.borderColor = 'var(--border-color)';
+                fileInputLabel.style.background = 'var(--bg-secondary)';
+                fileInputLabel.style.color = 'var(--text-secondary)';
+            }
+            
+            fileInputLabel.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    const fileName = files[0].name;
+                    fileInputLabel.textContent = `📁 ${fileName}`;
+                }
+            }
+            
+            // Update file input label when file is selected
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    const fileName = this.files[0].name;
+                    fileInputLabel.textContent = `📁 ${fileName}`;
+                } else {
+                    fileInputLabel.textContent = '📁 Choose JSON file or drag & drop';
+                }
+            });
+            
+            // Add event listeners
+            loadButton.addEventListener('click', function() {
+                if (fileInput.files.length === 0) {
+                    showNotification('Please select a JSON file first', 'error');
+                    return;
+                }
+                
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    try {
+                        const jsonData = JSON.parse(event.target.result);
+                        loadMachineFromJson(jsonData);
+                    } catch (error) {
+                        showNotification('Error parsing JSON file: ' + error.message, 'error');
+                        console.error('Error parsing JSON:', error);
+                    }
+                };
+                
+                reader.onerror = function() {
+                    showNotification('Error reading file', 'error');
+                };
+                
+                reader.readAsText(file);
+            });
+            
+            applyLayoutButton.addEventListener('click', function() {
+                const selectedLayout = layoutSelect.value;
+                applyLayout(selectedLayout);
+                showNotification(`Applied ${selectedLayout} layout`, 'success');
+            });
+            
+            fitViewButton.addEventListener('click', fitView);
+            
+            findPathsButton.addEventListener('click', function() {
+                const endNode = endNodeSelect.value;
+                const maxDepth = parseInt(maxDepthInput.value);
+                
+                if (!endNode) {
+                    showNotification('Please select an end node', 'error');
+                    return;
+                }
+                
+                if (isNaN(maxDepth) || maxDepth < 1) {
+                    showNotification('Please enter a valid max depth (minimum 1)', 'error');
+                    return;
+                }
+                
+                // Find all paths to the end node
+                foundPaths = findAllPaths(endNode, maxDepth);
+                
+                // Display the paths
+                displayPaths(foundPaths);
+                
+                // Show paths container with animation
+                pathsContainer.style.display = 'block';
+                pathsContainer.classList.add('fade-in');
+                
+                // Show notification
+                showNotification(`Found ${foundPaths.length} paths to "${endNode}" within max depth of ${maxDepth}`, 'success');
+            });
+            
+            resetButton.addEventListener('click', fitView);
+            saveButton.addEventListener('click', saveAsPng);
+            clearHighlightButton.addEventListener('click', clearHighlights);
+        };
+    </script>
+</body>
+</html>
