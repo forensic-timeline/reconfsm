@@ -1,0 +1,43 @@
+{
+    "system_shutdown_machine": [
+        {
+            "name": "system_shutdown_20250605_181200",
+            "initial_state": "System Shutdown",
+            "states": [
+                "System Shutdown",
+                "Initiating Shutdown",
+                "System Recovery",
+                "System Running"
+            ],
+            "triggers": [
+                "shutdown_completed",
+                "forceful_shutdown_detected",
+                "cmd_sudo_poweroff",
+                "cmd_sudo_shutdown_now"
+            ],
+            "transitions": [
+                {
+                    "trigger": "shutdown_completed",
+                    "source": "Initiating Shutdown",
+                    "dest": "System Shutdown"
+                },
+                {
+                    "trigger": "cmd_sudo_poweroff",
+                    "source": "System Running",
+                    "dest": "Initiating Shutdown"
+                },
+                {
+                    "trigger": "cmd_sudo_shutdown_now",
+                    "source": "System Running",
+                    "dest": "Initiating Shutdown"
+                },
+                {
+                    "trigger": "forceful_shutdown_detected",
+                    "source": "System Running",
+                    "dest": "System Recovery"
+                }
+            ],
+            "functions": {}
+        }
+    ]
+}

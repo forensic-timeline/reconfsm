@@ -1,0 +1,68 @@
+{
+    "application_activity_machine": [
+        {
+            "name": "application_activity_20250605_182104",
+            "initial_state": "Desktop",
+            "states": [
+                "Desktop",
+                "discord",
+                "firefox",
+                "calculator",
+                "snap-store"
+            ],
+            "triggers": [
+                "close_snap-store",
+                "close_firefox",
+                "close_calculator",
+                "close_discord",
+                "launch_discord",
+                "launch_calculator",
+                "launch_snap-store",
+                "launch_firefox"
+            ],
+            "transitions": [
+                {
+                    "trigger": "launch_discord",
+                    "source": "Desktop",
+                    "dest": "discord"
+                },
+                {
+                    "trigger": "launch_snap-store",
+                    "source": "Desktop",
+                    "dest": "snap-store"
+                },
+                {
+                    "trigger": "close_calculator",
+                    "source": "calculator",
+                    "dest": "Desktop"
+                },
+                {
+                    "trigger": "close_discord",
+                    "source": "discord",
+                    "dest": "Desktop"
+                },
+                {
+                    "trigger": "launch_firefox",
+                    "source": "discord",
+                    "dest": "firefox"
+                },
+                {
+                    "trigger": "close_firefox",
+                    "source": "firefox",
+                    "dest": "Desktop"
+                },
+                {
+                    "trigger": "launch_calculator",
+                    "source": "firefox",
+                    "dest": "calculator"
+                },
+                {
+                    "trigger": "close_snap-store",
+                    "source": "snap-store",
+                    "dest": "Desktop"
+                }
+            ],
+            "functions": {}
+        }
+    ]
+}
