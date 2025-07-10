@@ -1,0 +1,22 @@
+# Core finite state machine library
+transitions==0.9.2
+
+# Graph visualization
+graphviz==0.20.3
+
+# Standard library dependencies (included with Python)
+# - json (built-in)
+# - csv (built-in) 
+# - re (built-in)
+# - os (built-in)
+# - sys (built-in)
+# - time (built-in)
+# - datetime (built-in)
+# - importlib (built-in)
+# - urllib.parse (built-in)
+
+# Optional: For enhanced CSV processing (if needed)
+# pandas==2.1.4
+
+# Optional: For additional date parsing (if needed)  
+# python-dateutil==2.8.2
