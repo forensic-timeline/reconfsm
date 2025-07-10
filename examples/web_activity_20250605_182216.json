@@ -1,0 +1,90 @@
+{
+    "web_activity_machine": [
+        {
+            "name": "web_activity_20250605_182216",
+            "initial_state": "Search Engine google: bing",
+            "states": [
+                "Search Engine google: bing",
+                "Web : bing.com",
+                "Search Engine bing: firefox",
+                "Web : bing.com/ck/a",
+                "Web : mozilla.org/id/firefox/new",
+                "Web : mozilla.org/id/firefox/download",
+                "Web : download.mozilla.org",
+                "File: firefox-138.0.4.tar.xz",
+                "Web : google.com",
+                "Search Engine google: sql injection",
+                "Web : w3schools.com/sql/sql_injection.asp"
+            ],
+            "triggers": [
+                "accessed_website_redirect",
+                "downloaded_file",
+                "accessed_website_link",
+                "performed_search",
+                "accessed_website_direct"
+            ],
+            "transitions": [
+               
+                {
+                    "trigger": "accessed_website_direct",
+                    "source": "File: firefox-138.0.4.tar.xz",
+                    "dest": "Web : google.com"
+                },
+                {
+                    "trigger": "accessed_website_link",
+                    "source": "Search Engine bing: firefox",
+                    "dest": "Web : bing.com/ck/a"
+                },
+                {
+                    "trigger": "accessed_website_link",
+                    "source": "Search Engine bing: firefox",
+                    "dest": "Web : mozilla.org/id/firefox/new"
+                },
+                {
+                    "trigger": "accessed_website_link",
+                    "source": "Search Engine google: bing",
+                    "dest": "Web : bing.com"
+                },
+               
+             
+                {
+                    "trigger": "accessed_website_link",
+                    "source": "Search Engine google: sql injection",
+                    "dest": "Web : w3schools.com/sql/sql_injection.asp"
+                },
+              
+                {
+                    "trigger": "performed_search",
+                    "source": "Web : bing.com",
+                    "dest": "Search Engine bing: firefox"
+                },
+                {
+                    "trigger": "performed_search",
+                    "source": "Web : bing.com/ck/a",
+                    "dest": "Search Engine bing: firefox"
+                },
+                {
+                    "trigger": "downloaded_file",
+                    "source": "Web : download.mozilla.org",
+                    "dest": "File: firefox-138.0.4.tar.xz"
+                },
+                {
+                    "trigger": "performed_search",
+                    "source": "Web : google.com",
+                    "dest": "Search Engine google: sql injection"
+                },
+                {
+                    "trigger": "accessed_website_link",
+                    "source": "Web : mozilla.org/id/firefox/download",
+                    "dest": "Web : download.mozilla.org"
+                },
+                {
+                    "trigger": "accessed_website_link",
+                    "source": "Web : mozilla.org/id/firefox/new",
+                    "dest": "Web : mozilla.org/id/firefox/download"
+                }
+               
+            ]
+        }
+    ]
+}
