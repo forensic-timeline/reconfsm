@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reconfsm"
+version = "0.0.1"
+authors = [
+  { name="Hudan Studiawan, Afiq Fawwaz Haidar, Arkananta Masarief, Kemal Tangguh Aji Rajasa"},
+]
+description = "Reconstruction of Forensic Timelines Using Finite State Machine"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "transitions==0.9.2",
+    "graphviz==0.20.3",
+    "pandas",
+]
+license-files = ["LICENSE"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Security",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
+[project.scripts]
+reconfsm = "reconfsm.reconfsm:main"
+
+[project.urls]
+"Homepage" = "https://github.com/forensic-timeline/reconfsm"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["reconfsm*"]
