@@ -24,22 +24,14 @@ from reconfsm.converter.scripts.application_activity import (
 
 @pytest.fixture
 def base_systemd_row():
-    """Minimal valid systemd journal row."""
     return {
         "source": "LOG",
         "source_long": "Systemd Journal",
         "message": "",
     }
 
-
-# ===========================================================================
-# application_activity() – top-level dispatcher
-# ===========================================================================
-
 class TestApplicationActivity:
     """Tests for the main application_activity() dispatcher."""
-
-    # --- source filtering ---
 
     def test_returns_none_for_non_log_source(self, base_systemd_row):
         base_systemd_row["source"] = "WEBHIST"
@@ -49,8 +41,6 @@ class TestApplicationActivity:
     def test_returns_none_when_source_key_missing(self, base_systemd_row):
         del base_systemd_row["source"]
         assert application_activity(base_systemd_row) is None
-
-    # --- source_long filtering ---
 
     def test_returns_none_for_non_systemd_source_long(self, base_systemd_row):
         base_systemd_row["source_long"] = "Syslog"
@@ -68,8 +58,6 @@ class TestApplicationActivity:
         result = application_activity(base_systemd_row)
         assert result is not None
 
-    # --- message filtering ---
-
     def test_returns_none_when_message_empty(self, base_systemd_row):
         base_systemd_row["message"] = ""
         assert application_activity(base_systemd_row) is None
@@ -81,8 +69,6 @@ class TestApplicationActivity:
     def test_returns_none_for_unrecognised_message(self, base_systemd_row):
         base_systemd_row["message"] = "Some random journal log line"
         assert application_activity(base_systemd_row) is None
-
-    # --- dispatch to start ---
 
     def test_dispatches_to_start_for_snap_app(self, base_systemd_row):
         base_systemd_row["message"] = "Started snap.firefox.firefox.scope"
@@ -99,8 +85,6 @@ class TestApplicationActivity:
         assert result is not None
         _, activity, _ = result
         assert activity.startswith("launch_")
-
-    # --- dispatch to termination ---
 
     def test_dispatches_to_termination_for_snap_app(self, base_systemd_row):
         base_systemd_row["message"] = (
@@ -120,10 +104,6 @@ class TestApplicationActivity:
         _, activity, _ = result
         assert activity.startswith("close_")
 
-
-# ===========================================================================
-# _extract_application_start()
-# ===========================================================================
 
 class TestExtractApplicationStart:
     """Tests for _extract_application_start()."""
@@ -161,12 +141,10 @@ class TestExtractApplicationStart:
         assert _extract_application_start("") is None
 
     def test_started_without_scope_returns_none(self):
-        """'Started' keyword present but no *.scope suffix."""
         message = "Started some-service.service"
         assert _extract_application_start(message) is None
 
     def test_unrecognised_scope_name_returns_none(self):
-        """Scope name that doesn't match snap or gnome pattern."""
         message = "Started unknown-app-format.scope"
         assert _extract_application_start(message) is None
 
@@ -182,10 +160,6 @@ class TestExtractApplicationStart:
         assert result is not None
         assert result[2] is None
 
-
-# ===========================================================================
-# _extract_application_termination()
-# ===========================================================================
 
 class TestExtractApplicationTermination:
     """Tests for _extract_application_termination()."""
@@ -246,14 +220,8 @@ class TestExtractApplicationTermination:
         assert _extract_application_termination(message) is None
 
 
-# ===========================================================================
-# _util_app_name_from_scope()
-# ===========================================================================
-
 class TestUtilAppNameFromScope:
     """Tests for the _util_app_name_from_scope() helper."""
-
-    # --- snap pattern ---
 
     def test_snap_firefox(self):
         assert _util_app_name_from_scope("snap.firefox.firefox.scope") == "firefox"
@@ -266,8 +234,6 @@ class TestUtilAppNameFromScope:
 
     def test_snap_code(self):
         assert _util_app_name_from_scope("snap.code.code.scope") == "code"
-
-    # --- gnome pattern ---
 
     def test_gnome_nautilus(self):
         result = _util_app_name_from_scope("app-gnome-org.gnome.Nautilus-12345.scope")
@@ -283,8 +249,6 @@ class TestUtilAppNameFromScope:
         assert result is not None
         assert result == result.lower()
 
-    # --- unrecognised patterns ---
-
     def test_unrecognised_scope_returns_none(self):
         assert _util_app_name_from_scope("unknown-app.scope") is None
 
@@ -294,10 +258,7 @@ class TestUtilAppNameFromScope:
     def test_plain_scope_suffix_returns_none(self):
         assert _util_app_name_from_scope("session-1.scope") is None
 
-    # --- snap takes priority over gnome ---
-
     def test_snap_pattern_matched_before_gnome(self):
-        """If a scope somehow contains both markers, snap wins."""
         scope = "snap.gnome-calculator.gnome.Calculator-1.scope"
         result = _util_app_name_from_scope(scope)
         assert result == "gnome-calculator"

@@ -21,10 +21,6 @@ from reconfsm.converter.scripts.web_activity import (
 )
 
 
-# ---------------------------------------------------------------------------
-# Fixtures – reusable base rows
-# ---------------------------------------------------------------------------
-
 @pytest.fixture
 def base_firefox_row():
     """Minimal valid Firefox history row."""
@@ -35,14 +31,8 @@ def base_firefox_row():
     }
 
 
-# ===========================================================================
-# web_activity() – top-level dispatcher
-# ===========================================================================
-
 class TestWebActivity:
     """Tests for the main web_activity() dispatcher."""
-
-    # --- source / source_long filtering ---
 
     def test_returns_none_for_non_webhist_source(self, base_firefox_row):
         base_firefox_row["source"] = "SYSLOG"
@@ -70,8 +60,6 @@ class TestWebActivity:
         del base_firefox_row["message"]
         assert web_activity(base_firefox_row) is None
 
-    # --- download dispatch ---
-
     def test_dispatch_to_download(self, base_firefox_row):
         base_firefox_row["message"] = (
             "https://example.com/file.zip (file.zip) Transition: DOWNLOAD"
@@ -79,8 +67,6 @@ class TestWebActivity:
         result = web_activity(base_firefox_row)
         assert result is not None
         assert result[1] == "downloaded_file"
-
-    # --- search dispatch ---
 
     def test_dispatch_to_search(self, base_firefox_row):
         base_firefox_row["message"] = (
@@ -91,8 +77,6 @@ class TestWebActivity:
         assert result is not None
         assert result[1] == "performed_search"
 
-    # --- web access dispatch ---
-
     def test_dispatch_to_web_access_typed(self, base_firefox_row):
         base_firefox_row["message"] = (
             "https://example.com Transition: TYPED"
@@ -101,13 +85,9 @@ class TestWebActivity:
         assert result is not None
         assert result[1] == "accessed_website_direct"
 
-    # --- returns None when no pattern matches ---
-
     def test_returns_none_for_unrecognised_message(self, base_firefox_row):
         base_firefox_row["message"] = "Some random log line with no pattern"
         assert web_activity(base_firefox_row) is None
-
-    # --- case-insensitive source_long matching ---
 
     def test_source_long_case_insensitive(self, base_firefox_row):
         base_firefox_row["source_long"] = "FIREFOX HISTORY"
@@ -115,10 +95,6 @@ class TestWebActivity:
         result = web_activity(base_firefox_row)
         assert result is not None
 
-
-# ===========================================================================
-# _extract_download_info()
-# ===========================================================================
 
 class TestExtractDownloadInfo:
     """Tests for _extract_download_info()."""
@@ -139,7 +115,6 @@ class TestExtractDownloadInfo:
         result = _extract_download_info(message)
         assert result is not None
         label, activity, _ = result
-        # Should URL-decode the filename
         assert "My_File.pdf" in label or "My File.pdf" in label
 
     def test_no_download_transition_returns_none(self):
@@ -158,11 +133,6 @@ class TestExtractDownloadInfo:
         message = "https://example.com/data.csv (data.csv) Transition: DOWNLOAD"
         result = _extract_download_info(message)
         assert result[2] is None
-
-
-# ===========================================================================
-# _extract_search_info()
-# ===========================================================================
 
 
 class TestExtractSearchInfo:
@@ -199,10 +169,6 @@ class TestExtractSearchInfo:
     def test_invalid_search_returns_none(self, invalid_message):
         assert _extract_search_info(invalid_message) is None
 
-
-# ===========================================================================
-# _extract_web_access_info()
-# ===========================================================================
 
 class TestExtractWebAccessInfo:
     """Tests for _extract_web_access_info()."""
@@ -250,20 +216,14 @@ class TestExtractWebAccessInfo:
         message = "https://example.com/a/b/c/d Transition: TYPED"
         result = _extract_web_access_info(message)
         assert result is not None
-        # Only first 3 path segments should be included
         label = result[0]
         assert "a" in label and "b" in label and "c" in label
-        assert "d" not in label  # 4th segment should be truncated
+        assert "d" not in label
 
     def test_download_transition_NOT_matched(self):
-        """DOWNLOAD should not be caught by web access extractor."""
         message = "https://example.com/f.zip (f.zip) Transition: DOWNLOAD"
         assert _extract_web_access_info(message) is None
 
-
-# ===========================================================================
-# _util_site_name()
-# ===========================================================================
 
 class TestUtilSiteName:
     """Tests for the _util_site_name() helper."""
@@ -290,10 +250,6 @@ class TestUtilSiteName:
     def test_empty_string_returns_none(self):
         assert _util_site_name("") is None
 
-
-# ===========================================================================
-# _util_search_query()
-# ===========================================================================
 
 class TestUtilSearchQuery:
     """Tests for the _util_search_query() helper."""
@@ -347,10 +303,6 @@ class TestUtilSearchQuery:
         assert "hello world" in result.lower()
 
 
-# ===========================================================================
-# _util_name_from_parentheses()
-# ===========================================================================
-
 class TestUtilNameFromParentheses:
     """Tests for the _util_name_from_parentheses() fallback helper."""
 
@@ -366,7 +318,6 @@ class TestUtilNameFromParentheses:
     def test_strips_special_characters(self):
         result = _util_name_from_parentheses("text (hello@world!) extra")
         assert result is not None
-        # Special chars except .,?!- should be stripped
         assert "@" not in result
 
     def test_collapses_whitespace(self):
@@ -374,6 +325,5 @@ class TestUtilNameFromParentheses:
         assert result == "hello world"
 
     def test_returns_none_for_empty_parentheses(self):
-        # After stripping special chars the result might be empty
         result = _util_name_from_parentheses("text () extra")
         assert result is None

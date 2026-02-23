@@ -35,14 +35,8 @@ def base_systemd_row():
     }
 
 
-# ===========================================================================
-# system_shutdown() – top-level dispatcher
-# ===========================================================================
-
 class TestSystemShutdown:
     """Tests for the system_shutdown() dispatcher."""
-
-    # --- source filtering ---
 
     def test_returns_none_for_non_log_source(self, base_systemd_row):
         base_systemd_row["source"] = "WEBHIST"
@@ -52,8 +46,6 @@ class TestSystemShutdown:
     def test_returns_none_when_source_key_missing(self, base_systemd_row):
         del base_systemd_row["source"]
         assert system_shutdown(base_systemd_row) is None
-
-    # --- source_long filtering ---
 
     def test_returns_none_for_non_systemd_source_long(self, base_systemd_row):
         base_systemd_row["source_long"] = "Syslog"
@@ -71,8 +63,6 @@ class TestSystemShutdown:
         result = system_shutdown(base_systemd_row)
         assert result is not None
 
-    # --- message filtering ---
-
     def test_returns_none_when_message_empty(self, base_systemd_row):
         base_systemd_row["message"] = ""
         assert system_shutdown(base_systemd_row) is None
@@ -84,8 +74,6 @@ class TestSystemShutdown:
     def test_returns_none_for_unrecognised_message(self, base_systemd_row):
         base_systemd_row["message"] = "Some unrelated journal log line"
         assert system_shutdown(base_systemd_row) is None
-
-    # --- dispatch to each extractor ---
 
     def test_dispatches_to_scheduled_shutdown(self, base_systemd_row):
         base_systemd_row["message"] = (
@@ -128,10 +116,6 @@ class TestSystemShutdown:
         assert result is not None
         assert result[1] == "forceful_shutdown_detected"
 
-
-# ===========================================================================
-# _extract_scheduled_shutdown()
-# ===========================================================================
 
 class TestExtractScheduledShutdown:
     """Tests for _extract_scheduled_shutdown()."""
@@ -189,14 +173,8 @@ class TestExtractScheduledShutdown:
         assert result[1].startswith("scheduled_shutdown_")
 
 
-# ===========================================================================
-# _extract_manual_shutdown()
-# ===========================================================================
-
 class TestExtractManualShutdown:
     """Tests for _extract_manual_shutdown()."""
-
-    # --- poweroff sub-pattern ---
 
     def test_poweroff_command(self):
         result = _extract_manual_shutdown("COMMAND=/usr/sbin/poweroff")
@@ -213,19 +191,10 @@ class TestExtractManualShutdown:
         assert result[1] == "cmd_sudo_poweroff"
 
     def test_poweroff_hyphenated_suffix_matches_due_to_word_boundary(self):
-        """
-        Known edge case: the source regex uses \\b, but '-' is itself a word
-        boundary, so 'poweroff-extended' still matches the poweroff pattern.
-        This test documents the *current* behaviour of the extractor.
-        If the regex is tightened (e.g. to r'poweroff(?!\\S)'), this test
-        should be updated to assert None.
-        """
         message = "COMMAND=/usr/sbin/poweroff-extended"
         result = _extract_manual_shutdown(message)
         assert result is not None
         assert result[1] == "cmd_sudo_poweroff"
-
-    # --- shutdown now sub-pattern ---
 
     def test_shutdown_now_command(self):
         result = _extract_manual_shutdown("COMMAND=/usr/sbin/shutdown now")
@@ -243,8 +212,6 @@ class TestExtractManualShutdown:
         assert result is not None
         assert result[1] == "cmd_sudo_shutdown_now"
 
-    # --- init 0 sub-pattern ---
-
     def test_init_0_command(self):
         result = _extract_manual_shutdown("COMMAND=/usr/sbin/init 0")
         assert result is not None
@@ -256,11 +223,8 @@ class TestExtractManualShutdown:
         assert result[2] == "System Running"
 
     def test_init_1_does_not_match(self):
-        """init 1 is single-user mode, not shutdown."""
         message = "COMMAND=/usr/sbin/init 1"
         assert _extract_manual_shutdown(message) is None
-
-    # --- no match ---
 
     def test_empty_message_returns_none(self):
         assert _extract_manual_shutdown("") is None
@@ -268,10 +232,6 @@ class TestExtractManualShutdown:
     def test_unrelated_command_returns_none(self):
         assert _extract_manual_shutdown("COMMAND=/usr/bin/apt update") is None
 
-
-# ===========================================================================
-# _extract_shutdown_completion()
-# ===========================================================================
 
 class TestExtractShutdownCompletion:
     """Tests for _extract_shutdown_completion()."""
@@ -304,10 +264,6 @@ class TestExtractShutdownCompletion:
         assert _extract_shutdown_completion("System rebooting normally") is None
 
 
-# ===========================================================================
-# _extract_forceful_shutdown()
-# ===========================================================================
-
 class TestExtractForcefulShutdown:
     """Tests for _extract_forceful_shutdown()."""
 
@@ -339,7 +295,6 @@ class TestExtractForcefulShutdown:
         assert _extract_forceful_shutdown("") is None
 
     def test_partial_pattern_returns_none(self):
-        """Only 'corrupted' without the full phrase should not match."""
         message = "system.journal corrupted"
         assert _extract_forceful_shutdown(message) is None
 
