@@ -1,3 +1,4 @@
 tests/__pycache__
 reconfsm/converter/scripts/__pycache__
 reconfsm/fsm/__pycache__
+reconfsm/converter/__pycache__
