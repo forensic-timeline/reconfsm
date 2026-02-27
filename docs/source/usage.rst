@@ -85,3 +85,33 @@ Export the timeline to a CSV format that ReconFSM can understand.
    docker run -v "$(pwd):/data" log2timeline/plaso psort -w /data/timeline.csv /data/timeline.plaso
 
 .. note:: Ensure you use the ``-w`` flag in psort to generate a full CSV output.
+
+Running Tests Usage
+-------------------
+
+.. important::
+   Make sure pytest is installed in your environment. You can install it using the following command:
+
+   .. code-block:: bash
+
+      pip install pytest
+
+ReconFSM includes a test suite to ensure the tools work as expected. You can run the tests using the following command:
+
+.. code-block:: bash
+
+   pytest -v
+
+But, you can also test each different function that is located in a separated file. For example, if you want to test the application activity, you can run the following command:
+
+.. code-block:: bash
+
+   pytest tests/test_application_activity.py
+
+And if you want to test other function, you can just replace the file name in the command.
+
+.. code-block:: bash
+
+   pytest tests/<file-name.py>
+
+
