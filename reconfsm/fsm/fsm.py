@@ -12,7 +12,7 @@ import sys
 import json
 import os
 from transitions.extensions import GraphMachine
-from .pathfinding import pathfinding_simulation
+from .fsm_pathfinding import pathfinding_simulation
 from .graph import graph_simulation
 
 
