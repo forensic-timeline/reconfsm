@@ -18,7 +18,7 @@ import os
 import sys
 import pytest
 from reconfsm.fsm.fsm import FSMachine, load_machine_from_json, main
-from reconfsm.fsm.pathfinding import pathfinding_simulation, sort_and_display_paths
+from reconfsm.fsm.fsm_pathfinding import pathfinding_simulation, sort_and_display_paths
 from reconfsm.fsm.graph import graph_simulation
 
 
