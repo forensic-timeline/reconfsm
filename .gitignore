@@ -4,3 +4,4 @@ reconfsm/fsm/__pycache__
 reconfsm/converter/__pycache__
 reconfsm/__pycache__
 docs/build
+.dockerignore
