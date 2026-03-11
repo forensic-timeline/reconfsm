@@ -67,6 +67,58 @@ The core dependencies include:
 *   **transitions**: The engine used for finite state machine logic.
 *   **graphviz**: Used for generating static graph images (PNG/PDF).
 
+Alternative: Docker Installation
+---------------------------------
+
+If you prefer not to manage a local Python environment, ReconFSM provides a Docker image that bundles all dependencies (including Graphviz) out of the box.
+
+Prerequisites
+^^^^^^^^^^^^^
+
+Ensure Docker Engine is installed and running on your system:
+
+*   **Windows / macOS**: Install `Docker Desktop <https://www.docker.com/products/docker-desktop/>`_.
+*   **Linux**: Install Docker Engine via your package manager:
+
+    .. code-block:: bash
+
+       sudo apt-get update
+       sudo apt-get install -y docker.io
+       sudo systemctl enable --now docker
+
+Option A: Pull from Docker Hub
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+   docker pull kemalrajasa/reconfsm:latest
+
+Option B: Build from Source
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Clone the repository first (see Step 2), then build the image locally:
+
+.. code-block:: bash
+
+   docker build -t reconfsm .
+
+Running the Container
+^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+   # Interactive shell — mount your data directory into /data
+   docker run --rm -it -v "$(pwd)/data:/data" reconfsm
+
+   # Run a specific command directly
+   docker run --rm -v "$(pwd)/data:/data" reconfsm python reconfsm/converter/converter.py --help
+
+.. note::
+
+   The Docker image runs as a non-root user (``reconfsm``) for security.
+   Any output files written inside the container will go to ``/app`` by default.
+   Use the ``-v`` flag to mount a host directory and persist results.
+
 Step 4: Verify Installation
 ---------------------------
 

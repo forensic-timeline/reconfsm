@@ -36,6 +36,41 @@ pip install -r requirements.txt
 
 Remember, every time you need to use this package, ensure that you activate the virtual environment using `conda activate reconfsm`.
 
+### Alternative: Docker
+
+If you prefer a fully containerised setup (no Python or Graphviz installation required):
+
+**Pull from Docker Hub:**
+
+```bash
+docker pull kemalrajasa/reconfsm:latest
+```
+
+**Or build locally from source:**
+
+```bash
+git clone https://github.com/your-username/reconfsm.git
+cd reconfsm
+docker build -t reconfsm .
+```
+
+**Run an interactive shell:**
+
+```bash
+docker run --rm -it -v "$(pwd)/data:/data" kemalrajasa/reconfsm:latest
+```
+
+**Run a one-off command:**
+
+```bash
+docker run --rm -v "$(pwd)/data:/data" kemalrajasa/reconfsm:latest \
+  python reconfsm/converter/converter.py --help
+```
+
+> The container runs as a non-root user and drops you into `/app`. Use `-v` to mount your data directory so output files are accessible on the host.
+
+
+
 ## Project Structure
 
 ```
